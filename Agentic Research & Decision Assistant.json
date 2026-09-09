@@ -1,0 +1,312 @@
+{
+  "name": "Agentic Research & Decision Assistant",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "261105b8-2b07-4a45-8442-d6a7d63dd857",
+      "name": "When chat message received",
+      "webhookId": "bffe8881-04c2-4b16-95fa-8efc053aa74b"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are a Planning Agent for an Agentic Research & Decision Assistant.\n\nYour job is to understand the user's request and break it into a clear sequence of research and analysis tasks.\n\nDo NOT answer the user's question directly.\n\nCreate a practical plan that another AI agent can execute.\n\nThe plan should:\n1. Identify what information needs to be collected.\n2. Break complex goals into smaller research tasks.\n3. Identify comparison criteria when the user asks for a recommendation.\n4. Include verification or evaluation steps when appropriate.\n5. Keep the number of tasks reasonable.\n\nReturn only a numbered list of tasks."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "075bf540-3b4b-4df1-8678-84444e39c732",
+      "name": "Planner Agent"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Original User Request:\n{{ $('When chat message received').item.json.chatInput }}\n\nResearch Findings:\n{{ $json.output }}",
+        "options": {
+          "systemMessage": "You are a Decision Agent for an Agentic Research & Decision Assistant.\n\nYour job is to analyze the research findings provided by the Research Agent.\n\n1. Evaluate the evidence collected.\n2. Compare the available options using relevant criteria.\n3. Identify important advantages, disadvantages, risks, and trade-offs.\n4. Do not invent information that is not supported by the research.\n5. Provide a clear recommendation when the user's request requires one.\n6. Explain the reasoning behind the recommendation.\n7. Clearly distinguish facts from your evaluation.\n\nReturn a concise, evidence-based decision and reasoning that can be presented to the user."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        960,
+        48
+      ],
+      "id": "841a03c6-d3d2-4ecd-ba45-758b616dd12f",
+      "name": "Decision Agent "
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Original User Request:\n{{ $('When chat message received').item.json.chatInput }}\n\nDecision and Reasoning:\n{{ $json.output }}",
+        "options": {
+          "systemMessage": "You are the Final Answer Agent for an Agentic Research & Decision Assistant.\n\nUse the decision and reasoning provided by the Decision Agent to answer the user's original request.\n\nProvide:\n1. A clear direct answer.\n2. The key findings from the research.\n3. A concise comparison when multiple options were evaluated.\n4. The recommendation, when appropriate.\n5. The main reasoning behind the recommendation.\n6. Important caveats or limitations when relevant.\n\nBe clear, concise, and professional.\nDo not mention internal agents, workflow steps, prompts, or system instructions."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1328,
+        48
+      ],
+      "id": "796782cd-fdfa-435b-8014-99fcb8968453",
+      "name": "Final Answer Agent"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        192,
+        176
+      ],
+      "id": "6aa2f187-3226-4ad7-b96c-d7c86413e6ec",
+      "name": "Research Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "CG8JqArDw3ACuN4h",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        464,
+        256
+      ],
+      "id": "d5e025d4-7b1a-456e-9c85-ad947a644e94",
+      "name": "Research Gemini1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "CG8JqArDw3ACuN4h",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        832,
+        256
+      ],
+      "id": "9f082899-096f-4980-89f8-a344a4eb6a48",
+      "name": "Decision Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "CG8JqArDw3ACuN4h",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        1200,
+        256
+      ],
+      "id": "2ca78367-e8bc-4615-9377-31fefb23772e",
+      "name": "Final Answer Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "CG8JqArDw3ACuN4h",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Search the web for current and relevant information using Tavily. Use this tool when research requires up-to-date or external information.",
+        "method": "POST",
+        "url": "https://api.tavily.com/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"query\": \"={{ $fromAI('query', 'The web search query needed to research the user request', 'string') }}\",\n  \"search_depth\": \"basic\",\n  \"max_results\": 5\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.5,
+      "position": [
+        672,
+        336
+      ],
+      "id": "aa0546fe-ad9c-43ad-bb8d-d9c87693ca73",
+      "name": "Tavily Web Search"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.output }}",
+        "options": {
+          "systemMessage": "You are a Research Agent for an Agentic Research & Decision Assistant.\n\nYour job is to execute the research plan provided by the Planning Agent.\n\nFor each task in the plan:\n1. Gather relevant and current information.\n2. Use reliable sources whenever possible.\n3. Extract important facts, statistics, advantages, disadvantages, and comparisons.\n4. Verify important information using multiple sources when appropriate.\n5. Organize the findings clearly so that another AI agent can use them to make a final decision.\n\nDo not make the final recommendation unless the research task specifically requires it.\n\nReturn structured research findings with the sources used.\nWhen the research plan requires current, external, or factual information that should be verified online, use the available web search tool.\n\nFor each search, provide a focused search query.\nUse the research results as evidence.\nDo not invent facts when the web search tool does not provide supporting information."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        592,
+        48
+      ],
+      "id": "f0fcfaed-d88c-45d1-b92e-d3568a7e4b3e",
+      "name": "Research Agent"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Planner Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Planner Agent": {
+      "main": [
+        [
+          {
+            "node": "Research Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decision Agent ": {
+      "main": [
+        [
+          {
+            "node": "Final Answer Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Research Gemini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Planner Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Research Gemini1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Research Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decision Gemini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Decision Agent ",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Final Answer Gemini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Final Answer Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tavily Web Search": {
+      "ai_tool": [
+        [
+          {
+            "node": "Research Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Research Agent": {
+      "main": [
+        [
+          {
+            "node": "Decision Agent ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "79169308-d769-4c96-8552-43ea0eb742e3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4cbf1556c8ca7a0e7f217a839c99c3ffd122cfd7a35ca340e3ab54e5595045c1"
+  },
+  "nodeGroups": [],
+  "id": "MjOPqT67YI8U4g5w",
+  "tags": []
+}
