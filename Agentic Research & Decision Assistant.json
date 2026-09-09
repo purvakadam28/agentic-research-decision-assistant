@@ -154,7 +154,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer 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"
+              "value": "Bearer YOUR_TAVILY_API_KEY"
             },
             {
               "name": "Content-Type",
