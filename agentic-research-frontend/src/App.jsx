@@ -40,6 +40,7 @@ function App() {
 
     if (!question || loading) return;
 
+    // Add user's message to the chat
     setMessages((prev) => [
       ...prev,
       {
@@ -52,13 +53,16 @@ function App() {
     setLoading(true);
 
     try {
+      // Get existing session ID
       let sessionId = localStorage.getItem("researchSessionId");
 
+      // Create a new session if one doesn't exist
       if (!sessionId) {
         sessionId = crypto.randomUUID();
         localStorage.setItem("researchSessionId", sessionId);
       }
 
+      // Send message to n8n
       const response = await fetch(N8N_CHAT_URL, {
         method: "POST",
         headers: {
@@ -67,18 +71,19 @@ function App() {
         body: JSON.stringify({
           action: "sendMessage",
           chatInput: question,
-          sessionId,
+          sessionId: sessionId,
         }),
       });
 
+      // Check HTTP response
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
 
+      // Read n8n response
       const data = await response.json();
 
-      console.log("n8n response:", data);
-
+      // Extract the answer
       const answer =
         data.output ||
         data.text ||
@@ -87,6 +92,7 @@ function App() {
         data.data ||
         "I received a response, but I couldn't read the answer.";
 
+      // Add AI response to chat
       setMessages((prev) => [
         ...prev,
         {
@@ -100,6 +106,7 @@ function App() {
     } catch (error) {
       console.error("Chat error:", error);
 
+      // Show connection error in chat
       setMessages((prev) => [
         ...prev,
         {
@@ -182,6 +189,7 @@ function App() {
       {/* MAIN CHAT AREA */}
       <main className="chat-container">
 
+        {/* WELCOME MESSAGE */}
         {messages.length === 1 && (
           <div className="welcome">
             <div className="welcome-icon">✦</div>
@@ -194,6 +202,7 @@ function App() {
           </div>
         )}
 
+        {/* MESSAGES */}
         <div className="messages">
 
           {messages.map((message, index) => (
@@ -202,10 +211,12 @@ function App() {
               className={`message-row ${message.role}`}
             >
 
+              {/* ASSISTANT AVATAR */}
               {message.role === "assistant" && (
                 <div className="avatar">✦</div>
               )}
 
+              {/* MESSAGE */}
               <div className="message-bubble">
 
                 {message.role === "assistant" ? (
