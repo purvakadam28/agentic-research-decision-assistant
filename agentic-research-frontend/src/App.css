@@ -97,7 +97,144 @@ textarea {
   width: 7px;
   height: 7px;
   border-radius: 50%;
+  background: #b7bccb;
+  transition: background 0.2s ease;
+}
+
+.status-online .status-dot {
   background: #42b883;
+}
+
+.status-error .status-dot {
+  background: #e2574c;
+}
+
+/* =========================
+   CAPABILITIES / INFO BUTTON
+========================= */
+
+.capabilities-btn {
+  display: inline-flex;
+  align-items: center;
+  height: 38px;
+  padding: 0 13px;
+  border: 1px solid #d9dce7;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #4f46a5;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.capabilities-btn:hover {
+  background: #f4f3ff;
+  border-color: #c9c5f5;
+}
+
+/* =========================
+   INFO / HOW IT WORKS MODAL
+========================= */
+
+.info-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 24, 40, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 100;
+}
+
+.info-panel {
+  width: 100%;
+  max-width: 460px;
+  max-height: 82vh;
+  overflow-y: auto;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 22px 24px 20px;
+  box-shadow: 0 20px 60px rgba(20, 24, 50, 0.25);
+}
+
+.info-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.info-panel-header h3 {
+  margin: 0;
+  font-size: 17px;
+  color: #202638;
+}
+
+.info-close {
+  border: none;
+  background: none;
+  font-size: 15px;
+  color: #929bad;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.info-close:hover {
+  color: #202638;
+}
+
+.info-intro {
+  margin: 6px 0 16px;
+  color: #667085;
+  font-size: 13.5px;
+}
+
+.capability-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.capability-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.capability-icon {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #e8ebff;
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+}
+
+.capability-name {
+  font-size: 13.5px;
+  font-weight: 650;
+  color: #202638;
+}
+
+.capability-desc {
+  font-size: 12.5px;
+  color: #7b8498;
+  line-height: 1.5;
+  margin-top: 2px;
+}
+
+.info-footnote {
+  margin: 18px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid #edeef4;
+  font-size: 11.5px;
+  color: #929bad;
+  text-align: center;
 }
 
 /* =========================
@@ -264,10 +401,43 @@ textarea {
    TYPING INDICATOR
 ========================= */
 
+.typing-bubble {
+  padding: 13px 16px;
+}
+
+.stage-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  animation: stageFadeIn 0.35s ease;
+}
+
+.stage-icon {
+  font-size: 14px;
+}
+
+.stage-label {
+  font-size: 12.5px;
+  color: #667085;
+  font-weight: 600;
+}
+
+@keyframes stageFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .typing {
   display: flex;
   gap: 5px;
-  padding: 16px 18px;
+  padding: 2px 2px 0;
 }
 
 .typing span {
@@ -594,6 +764,16 @@ footer {
 
   .status {
     display: none;
+  }
+
+  .capabilities-btn {
+    height: 36px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+
+  .info-panel {
+    padding: 18px 18px 16px;
   }
 
   .new-chat-button {
