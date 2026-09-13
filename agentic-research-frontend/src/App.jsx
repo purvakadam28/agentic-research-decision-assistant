@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import "./App.css";
 
 const N8N_CHAT_URL =
-  "https://purvakadam.app.n8n.cloud/webhook/bffe8881-04c2-4b16-95fa-8efc053aa74b/chat";
+  "https://purvakadam.app.n8n.cloud/webhook/agentic-research";
 
 // Timeout for the whole pipeline. This workflow runs 4 sequential agent
 // calls plus a Tavily search round-trip, so it can legitimately take a
@@ -151,13 +151,14 @@ function App() {
 
       // Extract the answer
       const answer =
+        data.answer ||
         data.output ||
         data.text ||
         data.response ||
         data.message ||
         data.data ||
         "I received a response, but I couldn't read the answer.";
-
+        
       // Add AI response to chat
       setMessages((prev) => [
         ...prev,
