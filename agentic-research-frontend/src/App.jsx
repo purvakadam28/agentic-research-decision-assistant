@@ -5,23 +5,36 @@ import "./App.css";
 const N8N_CHAT_URL =
   "https://purvakadam.app.n8n.cloud/webhook/agentic-research";
 
-// Timeout for the whole pipeline. This workflow runs 4 sequential agent
-// calls plus a Tavily search round-trip, so it can legitimately take a
-// while — this is a safety net, not a target response time.
+// Timeout for the whole pipeline
 const REQUEST_TIMEOUT_MS = 90000;
 
-// Mirrors the real n8n workflow: Planner -> Research (Tavily) -> Decision -> Final Answer.
-// We don't get live per-stage events back from n8n (it only returns the final
-// output), so this is an honest best-effort progress indicator, timed to roughly
-// how the pipeline actually behaves — not a literal live status feed.
+// Pipeline stages
 const PIPELINE_STAGES = [
-  { id: "plan", icon: "🧭", label: "Planning the research approach" },
-  { id: "research", icon: "🔎", label: "Searching the web with Tavily" },
-  { id: "decide", icon: "⚖️", label: "Evaluating the evidence" },
-  { id: "final", icon: "✍️", label: "Drafting the final answer" },
+  {
+    id: "plan",
+    icon: "🧭",
+    label: "Planning the research approach",
+  },
+  {
+    id: "research",
+    icon: "🔎",
+    label: "Searching the web with Tavily",
+  },
+  {
+    id: "decide",
+    icon: "⚖️",
+    label: "Evaluating the evidence",
+  },
+  {
+    id: "final",
+    icon: "✍️",
+    label: "Drafting the final answer",
+  },
 ];
+
 const STAGE_INTERVAL_MS = 2400;
 
+// Agent capabilities
 const CAPABILITIES = [
   {
     icon: "🧭",
@@ -56,7 +69,7 @@ function App() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [stageIndex, setStageIndex] = useState(0);
-  const [connStatus, setConnStatus] = useState("idle"); // idle | online | error
+  const [connStatus, setConnStatus] = useState("idle");
   const [showInfo, setShowInfo] = useState(false);
 
   const messagesEndRef = useRef(null);
@@ -68,7 +81,7 @@ function App() {
     });
   }, [messages, loading]);
 
-  // Stop the pipeline animation and clean up its timer
+  // Stop pipeline animation
   const stopStageAnimation = () => {
     if (stageTimerRef.current) {
       clearInterval(stageTimerRef.current);
@@ -76,7 +89,7 @@ function App() {
     }
   };
 
-  // Start a completely new chat
+  // Start a new chat
   const startNewChat = () => {
     if (loading) return;
 
@@ -84,7 +97,6 @@ function App() {
     setInput("");
     setConnStatus("idle");
 
-    // Remove the previous conversation session
     localStorage.removeItem("researchSessionId");
   };
 
@@ -93,7 +105,7 @@ function App() {
 
     if (!question || loading) return;
 
-    // Add user's message to the chat
+    // Add user message
     setMessages((prev) => [
       ...prev,
       {
@@ -106,28 +118,32 @@ function App() {
     setLoading(true);
     setStageIndex(0);
 
-    // Walk through the pipeline stages while we wait. This is a best-effort
-    // visual — n8n only sends one response at the very end — but it honestly
-    // reflects the real Planner -> Research -> Decision -> Final Answer order.
+    // Start pipeline animation
     stopStageAnimation();
+
     stageTimerRef.current = setInterval(() => {
-      setStageIndex((i) => Math.min(i + 1, PIPELINE_STAGES.length - 1));
+      setStageIndex((i) =>
+        Math.min(i + 1, PIPELINE_STAGES.length - 1)
+      );
     }, STAGE_INTERVAL_MS);
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, REQUEST_TIMEOUT_MS);
 
     try {
       // Get existing session ID
       let sessionId = localStorage.getItem("researchSessionId");
 
-      // Create a new session if one doesn't exist
+      // Create session ID if needed
       if (!sessionId) {
         sessionId = crypto.randomUUID();
         localStorage.setItem("researchSessionId", sessionId);
       }
 
-      // Send message to n8n
+      // Send request to n8n
       const response = await fetch(N8N_CHAT_URL, {
         method: "POST",
         headers: {
@@ -146,20 +162,30 @@ function App() {
         throw new Error(`HTTP ${response.status}`);
       }
 
-      // Read n8n response
-      const data = await response.json();
+      // Read n8n response as TEXT
+      // This supports both JSON and plain-text responses.
+      const text = await response.text();
 
-      // Extract the answer
-      const answer =
-        data.answer ||
-        data.output ||
-        data.text ||
-        data.response ||
-        data.message ||
-        data.data ||
-        "I received a response, but I couldn't read the answer.";
-        
-      // Add AI response to chat
+      let answer;
+
+      try {
+        // Try JSON first
+        const data = JSON.parse(text);
+
+        answer =
+          data.answer ||
+          data.output ||
+          data.text ||
+          data.response ||
+          data.message ||
+          data.data ||
+          text;
+      } catch {
+        // If response is not JSON, use the plain text directly
+        answer = text;
+      }
+
+      // Add AI response
       setMessages((prev) => [
         ...prev,
         {
@@ -170,18 +196,20 @@ function App() {
               : JSON.stringify(answer, null, 2),
         },
       ]);
+
       setConnStatus("online");
     } catch (error) {
       console.error("Chat error:", error);
 
       const isTimeout = error.name === "AbortError";
+
       const content = isTimeout
         ? `The research pipeline didn't finish within ${Math.round(
             REQUEST_TIMEOUT_MS / 1000
           )}s and timed out. This workflow runs 4 agents plus a web search, so complex or multi-part questions can take a while — try a narrower question or send it again.`
-        : `Connection error: ${error.message}. If this keeps happening, check that the n8n webhook is active and that CORS/Allowed Origins on the Chat Trigger node includes this site's URL.`;
+        : `Connection error: ${error.message}. Please check the n8n webhook and workflow execution.`;
 
-      // Show connection error in chat
+      // Show error in chat
       setMessages((prev) => [
         ...prev,
         {
@@ -189,6 +217,7 @@ function App() {
           content,
         },
       ]);
+
       setConnStatus("error");
     } finally {
       clearTimeout(timeoutId);
@@ -233,6 +262,7 @@ function App() {
           {/* CONNECTION STATUS */}
           <div className={`status status-${connStatus}`}>
             <span className="status-dot"></span>
+
             {connStatus === "online"
               ? "Online"
               : connStatus === "error"
@@ -240,7 +270,7 @@ function App() {
               : "Ready"}
           </div>
 
-          {/* CAPABILITIES / HOW IT WORKS */}
+          {/* HOW IT WORKS */}
           <button
             onClick={() => setShowInfo(true)}
             className="capabilities-btn"
@@ -249,7 +279,7 @@ function App() {
             ⓘ How it works
           </button>
 
-          {/* NEW CHAT BUTTON */}
+          {/* NEW CHAT */}
           <button
             onClick={startNewChat}
             disabled={loading}
@@ -279,10 +309,18 @@ function App() {
 
       {/* HOW IT WORKS MODAL */}
       {showInfo && (
-        <div className="info-overlay" onClick={() => setShowInfo(false)}>
-          <div className="info-panel" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="info-overlay"
+          onClick={() => setShowInfo(false)}
+        >
+          <div
+            className="info-panel"
+            onClick={(e) => e.stopPropagation()}
+          >
+
             <div className="info-panel-header">
               <h3>How ResearchAI works</h3>
+
               <button
                 className="info-close"
                 onClick={() => setShowInfo(false)}
@@ -291,23 +329,38 @@ function App() {
                 ✕
               </button>
             </div>
+
             <p className="info-intro">
               Every question runs through four cooperating agents, in order:
             </p>
+
             <div className="capability-list">
               {CAPABILITIES.map((c) => (
-                <div className="capability-row" key={c.name}>
-                  <div className="capability-icon">{c.icon}</div>
+                <div
+                  className="capability-row"
+                  key={c.name}
+                >
+                  <div className="capability-icon">
+                    {c.icon}
+                  </div>
+
                   <div>
-                    <div className="capability-name">{c.name}</div>
-                    <div className="capability-desc">{c.desc}</div>
+                    <div className="capability-name">
+                      {c.name}
+                    </div>
+
+                    <div className="capability-desc">
+                      {c.desc}
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
+
             <p className="info-footnote">
               Built with n8n, Google Gemini, and Tavily web search.
             </p>
+
           </div>
         </div>
       )}
@@ -364,21 +417,27 @@ function App() {
               <div className="avatar">✦</div>
 
               <div className="message-bubble typing-bubble">
-                <div className="stage-row" key={stageIndex}>
+
+                <div
+                  className="stage-row"
+                  key={stageIndex}
+                >
                   <span className="stage-icon">
                     {PIPELINE_STAGES[stageIndex].icon}
                   </span>
+
                   <span className="stage-label">
                     {PIPELINE_STAGES[stageIndex].label}
                   </span>
                 </div>
+
                 <div className="typing">
                   <span></span>
                   <span></span>
                   <span></span>
                 </div>
-              </div>
 
+              </div>
             </div>
           )}
 
